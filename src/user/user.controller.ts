@@ -1,19 +1,32 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { ResponseUtil } from 'src/common/utils/response.util';
+import { Public } from 'src/auth/public.decorator';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('register')
+  @Public()
   register(@Body() registerDto: RegisterDto) {
     return this.userService.register(registerDto);
   }
 
   @Post('login')
+  @Public()
   login(@Body() loginDto: LoginDto) {
     return this.userService.login(loginDto);
+  }
+
+  @Get('info')
+  async getUserInfo(@Req() req: any) {
+    const { userId } = req.user;
+    const userInfo = await this.userService.getUserInfo(userId);
+    return ResponseUtil.success(userInfo, '获取成功')
   }
 }

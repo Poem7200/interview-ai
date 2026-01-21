@@ -3,6 +3,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './user/user.module';
+import { PassportModule } from '@nestjs/passport';
+import { JwtStrategy } from './auth/jwt.strategy';
 
 @Module({
   imports: [
@@ -13,16 +15,20 @@ import { UserModule } from './user/user.module';
     MongooseModule.forRoot('mongodb://localhost:27017/interview-ai'),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         secret: configService.get('JWT_SECRET') || 'interview-ai-secret-key',
-        signOptions: { expiresIn: configService.get<string>('JWT_EXPIRATION') || '7d' },
+        signOptions: {
+          expiresIn: configService.get<string>(
+            'JWT_EXPIRATION'
+          ) as unknown as number || '7d' },
       }),
       inject: [ConfigService],
       global: true,
     }),
+    PassportModule,
     UserModule
   ],
   controllers: [],
-  providers: [],
+  providers: [JwtStrategy],
 })
 export class AppModule {}
