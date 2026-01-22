@@ -14,6 +14,7 @@ import {
   ConsumptionRecord,
   ConsumptionRecordDocument,
 } from '../interview/schemas/consumption-record.schema';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -88,6 +89,31 @@ export class UserService {
     if (!user) {
       throw new NotFoundException('用户不存在');
     }
+    delete user.password;
+    return user;
+  }
+
+  async updateUser(userId: string, updateUserDto: UpdateUserDto) {
+    // 如果更新邮箱，检查邮箱是否已被使用
+    if (updateUserDto.email) {
+      const existingUser = await this.userModel.findOne({
+        email: updateUserDto.email,
+        _id: { $ne: userId }, // 排除当前用户
+      });
+
+      if (existingUser) {
+        throw new BadRequestException('邮箱已被使用');
+      }
+    }
+
+    const user = await this.userModel.findByIdAndUpdate(userId, updateUserDto, {
+      new: true,
+    });
+
+    if (!user) {
+      throw new NotFoundException('用户不存在');
+    }
+
     delete user.password;
     return user;
   }
